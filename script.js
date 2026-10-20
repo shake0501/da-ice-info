@@ -7,8 +7,10 @@
 // 日程データを最後に確認した日（カレンダー下に表示されます）
 const DATA_CHECKED = '2026年10月19日';
 
-// 最新MVと関連映像（id は YouTube の動画ID。youtu.be/ や watch?v= の後ろの文字列）
+// 最新動画（id は YouTube の動画ID。youtu.be/ や watch?v= の後ろの文字列）
+// 先頭の動画が最初に表示されます。新しい動画は先頭に追加してください。
 const VIDEOS = [
+  { id: 'ZnvP0DWBgWY', title: 'うららか', kind: 'Dance Performance Video', date: '2026年10月16日公開', note: 'フジテレビ系木曜劇場『波うららかに、めおと日和』主題歌。作詞・作曲は花村想太と小池竜暉（GENIC）、振付はShow-hey。' },
   { id: 'XRVcv9ZBTYE', title: 'アンリミテッド', kind: 'Music Video', date: '2026年7月17日公開', note: 'キリンビール「のどごし＜生＞」CMソング。作詞・作曲は工藤大輝と花村想太。' },
   { id: 'YLpP_abIUcc', title: 'アンリミテッド', kind: 'Dance Performance Video', date: '2026年8月3日公開', note: '振付は和田颯とgash!（Beat Buddy Boi）。MVでは見られないダンスをフルサイズで楽しめます。' },
   { id: 'EF1hQ9Q26Ks', title: 'アンリミテッド', kind: 'Music Video - Behind The Scenes', date: '2026年7月24日公開', note: 'MVの撮影の裏側を収めたビハインド映像です。' },
@@ -462,8 +464,9 @@ function initVideos() {
   listEl.replaceChildren(...VIDEOS.map(v => h('li', {},
     h('button', { type: 'button', class: 'video-pick', 'data-id': v.id, 'aria-pressed': 'false', onclick: () => choose(v) },
       h('img', { src: `https://i.ytimg.com/vi/${v.id}/mqdefault.jpg`, alt: '', loading: 'lazy' }),
-      h('span', {},
-        h('span', { class: 'video-pick-title', text: v.kind }),
+      h('span', { class: 'video-pick-text' },
+        h('span', { class: 'video-pick-title', text: v.title }),
+        h('span', { class: 'video-pick-kind', text: v.kind }),
         h('span', { class: 'video-pick-date', text: v.date }))))));
 
   noteEl.hidden = canEmbed;
@@ -529,37 +532,40 @@ function initDice() {
 }
 
 /* ============================================================
-   8. 氷のきらめき（背景キャンバス）
+   8. ひし形のタイル（背景キャンバス。ロゴのタイルをモチーフに、白が中心でたまに赤）
    ============================================================ */
 
 function initSparkles() {
   const canvas = document.getElementById('particleCanvas');
   if (!canvas || !canvas.getContext) return;
   const ctx = canvas.getContext('2d');
-  const COLORS = ['#eaf9ff', '#a8e6ff', '#7fd0ff', '#ffc2d8'];
   let w = 0, h2 = 0, items = [], prev = performance.now();
 
   const spawn = anywhere => ({
     x: Math.random() * w,
     y: anywhere ? Math.random() * h2 : h2 + 12,
-    r: 2 + Math.random() * 4.5,
-    vy: 5 + Math.random() * 12,
-    drift: (Math.random() - 0.5) * 6,
+    r: 1.5 + Math.random() * 2.5,
+    vy: 4 + Math.random() * 9,
+    drift: (Math.random() - 0.5) * 4,
     phase: Math.random() * Math.PI * 2,
-    twinkle: 0.7 + Math.random() * 1.6,
-    color: COLORS[Math.floor(Math.random() * COLORS.length)],
+    twinkle: 0.5 + Math.random() * 1.2,
+    color: Math.random() < 0.12 ? '#d6101e' : '#f4f2ee',
   });
 
   function resize() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const widthChanged = window.innerWidth !== w;
     w = window.innerWidth; h2 = window.innerHeight;
     canvas.width = Math.round(w * dpr); canvas.height = Math.round(h2 * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const count = Math.round(Math.min(46, (w * h2) / 30000));
-    items = Array.from({ length: count }, () => spawn(true));
+    // スマホでアドレスバーが出入りしただけ（高さだけ変化）のときは作り直さない
+    if (widthChanged || !items.length) {
+      const count = Math.round(Math.min(30, (w * h2) / 40000));
+      items = Array.from({ length: count }, () => spawn(true));
+    }
   }
 
-  // 4方向にとがった氷のきらめき
+  // ロゴのタイルと同じ、45度回した小さな四角
   function sparkle(p, alpha) {
     ctx.save();
     ctx.translate(p.x, p.y);
@@ -567,10 +573,10 @@ function initSparkles() {
     ctx.fillStyle = p.color;
     ctx.beginPath();
     ctx.moveTo(0, -p.r);
-    ctx.quadraticCurveTo(0, 0, p.r, 0);
-    ctx.quadraticCurveTo(0, 0, 0, p.r);
-    ctx.quadraticCurveTo(0, 0, -p.r, 0);
-    ctx.quadraticCurveTo(0, 0, 0, -p.r);
+    ctx.lineTo(p.r, 0);
+    ctx.lineTo(0, p.r);
+    ctx.lineTo(-p.r, 0);
+    ctx.closePath();
     ctx.fill();
     ctx.restore();
   }
@@ -585,7 +591,7 @@ function initSparkles() {
         p.x += p.drift * dt;
         if (p.y < -12) items[i] = spawn(false);
       }
-      const alpha = 0.25 + 0.55 * (0.5 + 0.5 * Math.sin(now / 1000 * p.twinkle + p.phase));
+      const alpha = 0.15 + 0.4 * (0.5 + 0.5 * Math.sin(now / 1000 * p.twinkle + p.phase));
       sparkle(p, alpha);
     });
   }
