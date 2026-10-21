@@ -4,6 +4,15 @@
    1. データ（予定や動画を追加・修正するときは、ここだけ編集します）
    ============================================================ */
 
+// サイトの更新情報（ロゴの下に流れます）。新しいものを先頭に追加してください。
+// 表示されるのは先頭から UPDATES_SHOWN 件だけです。href はページ内リンク（任意）。
+const UPDATES = [
+  { date: '2026-10-21', text: 'メンバーの公式プロフィールへのリンクと、和田颯のYouTube「ハヤテと○○」を追加しました', href: '#members' },
+  { date: '2026-10-20', text: '最新動画を「うららか」Dance Performance Videoに更新しました', href: '#latest-mv' },
+  { date: '2026-10-20', text: 'サイトのデザインをリニューアルしました' },
+];
+const UPDATES_SHOWN = 3;
+
 // 日程データを最後に確認した日（カレンダー下に表示されます）
 const DATA_CHECKED = '2026年10月19日';
 
@@ -121,6 +130,38 @@ function h(tag, props = {}, ...kids) {
     el.append(c.nodeType ? c : document.createTextNode(c));
   });
   return el;
+}
+
+/* ============================================================
+   2.5 更新情報ティッカー（ロゴの下を右から左へ流れる）
+   initNav より前に呼び、ページ内リンクにもスムーズスクロールが効くようにする
+   ============================================================ */
+
+function initNews() {
+  const box = document.getElementById('news-ticker');
+  const track = document.getElementById('news-ticker-track');
+  if (!box || !track || !UPDATES.length) return;
+
+  const fmt = key => key.replace(/-/g, '.');
+  const items = UPDATES.slice(0, UPDATES_SHOWN);
+
+  // copy=true は切れ目なく流すための複製（読み上げ・タブ移動の対象外）
+  const group = copy => items.map((u, i) => h('li', { class: `news-item${i === 0 ? ' is-latest' : ''}`, 'aria-hidden': copy ? 'true' : null },
+    h('time', { class: 'news-date', datetime: u.date, text: fmt(u.date) }),
+    u.href
+      ? h('a', { class: 'news-text', href: u.href, tabindex: copy ? '-1' : null, text: u.text })
+      : h('span', { class: 'news-text', text: u.text })));
+
+  track.replaceChildren(...group(false));
+  box.hidden = false;
+
+  if (REDUCE_MOTION) { box.classList.add('is-static'); return; }
+
+  track.append(...group(true));
+  // 文字数が変わっても同じ速さ（約60px/秒）で流れるように、長さから時間を決める
+  const setSpeed = () => { track.style.setProperty('--ticker-dur', `${Math.max(18, track.scrollWidth / 2 / 60)}s`); };
+  setSpeed();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(setSpeed);
 }
 
 /* ============================================================
@@ -609,6 +650,7 @@ function initSparkles() {
    ============================================================ */
 
 document.addEventListener('DOMContentLoaded', () => {
+  initNews();
   initNav();
   const cal = initCalendar();
   initHero(cal);

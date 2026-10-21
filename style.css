@@ -150,11 +150,61 @@ a { color: inherit; }
 .btn-ghost:hover { border-color: var(--paper); background: var(--ink-3); }
 .btn-sm { padding: 7px 14px; font-size: 0.78rem; }
 
+/* 固定ヘッダーの分だけ本文を下げる */
+main { padding-top: calc(var(--header-h) + env(safe-area-inset-top, 0px)); }
+
+/* ---------- 更新情報ティッカー（ロゴの下を流れる細い帯） ---------- */
+.news-ticker {
+  position: relative; z-index: 2;
+  background: rgba(10,10,11,0.92);
+  border-bottom: 1px solid var(--line);
+}
+.news-ticker-inner {
+  max-width: 1100px; margin: 0 auto; height: 40px;
+  display: flex; align-items: center; gap: 14px;
+  padding-left: max(20px, env(safe-area-inset-left, 0px));
+  padding-right: max(20px, env(safe-area-inset-right, 0px));
+}
+.news-ticker-label {
+  flex-shrink: 0; display: inline-flex; align-items: center; gap: 8px;
+  padding-right: 14px; border-right: 1px solid var(--line-strong);
+  font-family: var(--font-display); font-size: 0.7rem; font-weight: 500; letter-spacing: 0.28em; color: var(--text-muted);
+}
+.news-ticker-label::before { content: ''; width: 7px; height: 7px; background: var(--red); transform: rotate(45deg); }
+.news-ticker-viewport {
+  flex: 1; min-width: 0; overflow: hidden;
+  /* 両端をふわっと消す */
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 24px, #000 calc(100% - 24px), transparent);
+          mask-image: linear-gradient(90deg, transparent, #000 24px, #000 calc(100% - 24px), transparent);
+}
+.news-ticker-track {
+  list-style: none; display: flex; width: max-content;
+  animation: ticker var(--ticker-dur, 30s) linear infinite;
+}
+.news-ticker:hover .news-ticker-track,
+.news-ticker:focus-within .news-ticker-track { animation-play-state: paused; }
+@keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+.news-item {
+  flex-shrink: 0; display: inline-flex; align-items: center; gap: 10px;
+  padding-right: 56px; white-space: nowrap; font-size: 0.8rem;
+}
+/* 区切りもロゴのタイル */
+.news-item::before { content: ''; width: 5px; height: 5px; background: var(--paper); opacity: 0.55; transform: rotate(45deg); }
+.news-item.is-latest::before { background: var(--red); opacity: 1; }
+.news-date { font-family: var(--font-display); font-size: 0.78rem; color: var(--text-muted); font-variant-numeric: tabular-nums; letter-spacing: 0.04em; }
+.news-text { color: var(--text); text-decoration: none; }
+a.news-text:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* 動きを減らす設定の人には、流さずに横スクロールで並べる */
+.news-ticker.is-static .news-ticker-viewport { overflow-x: auto; -webkit-mask-image: none; mask-image: none; }
+.news-ticker.is-static .news-ticker-track { animation: none; }
+
 /* ---------- ヒーロー ---------- */
 .hero {
   position: relative; z-index: 1; overflow: hidden;
   display: flex; align-items: center;
-  padding: calc(var(--header-h) + 56px) 0 72px;
+  padding: 56px 0 72px;
 }
 .hero-inner {
   position: relative; width: 100%;
@@ -477,6 +527,9 @@ button.cal-cell:hover { background: var(--ink-3); }
 .sns-btn:hover { background: var(--paper); color: var(--ink); border-color: var(--paper); }
 .sns-youtube:hover { background: var(--red); color: #fff; border-color: var(--red); }
 .sns-wide { flex: 1 1 100%; }
+/* 公式プロフィールは白地で、SNSボタンと区別する */
+.sns-profile { background: var(--paper); color: var(--ink); border-color: var(--paper); }
+.sns-profile:hover { background: var(--red); color: #fff; border-color: var(--red); }
 
 /* ---------- 公式・ショップ ---------- */
 .official-links-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
@@ -524,7 +577,7 @@ button.cal-cell:hover { background: var(--ink-3); }
     padding-left: max(16px, env(safe-area-inset-left, 0px));
     padding-right: max(16px, env(safe-area-inset-right, 0px));
   }
-  .hero { padding-top: calc(var(--header-h) + 36px); }
+  .hero { padding-top: 36px; }
   .cal-month-label { font-size: 1.1rem; min-width: 5.6em; }
   .cal-cell { min-height: 56px; padding: 4px; }
   .cal-chips { flex-direction: row; flex-wrap: wrap; gap: 4px; padding-left: 2px; }
